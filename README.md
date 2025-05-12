@@ -96,6 +96,8 @@ Note that the default behaviour is to compile with aggressive optimization enabl
 3) The average size of the largest RP cluster as a function of the number of active bonds. This is basically the aggregated average over all the simulations performed.
 4) The average size of the largest RP cluster as a function of the bond concentration. This is the convolution of the third line with the binomial distribution.
 
+Values of the number of active bonds $m$ correspond to the line number, i.e., the first line is for $m=1$, the second for $m=2$ and so on. Values of the bond concentration are $p=m/M$.
+
 #### runner
 
 For simplicity, we provide with a simple runner that can be executed to perform `TOT` parallel simulations using `num_cores` cores. The runner takes in input `L`, `T`, `TOT` and `num_cores`. The first three inputs have the same meaning as before. The last input, `num_cores`, is used to have exactly `num_cores` simulations running in paraller. For example, executing
