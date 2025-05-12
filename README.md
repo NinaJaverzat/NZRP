@@ -106,7 +106,7 @@ For simplicity, we provide with a simple runner that can be executed to perform 
 ./runner 64 1000 100 10
 ```
 
-will perform 100 simulations (`num=1` to `num=100`) of `T=1000` trials each, on a lattice with linear size `L=64` while keeping occupied no more than 10 cores with 10 parallel simulations. The runner enters the folder `code`, compiles the code with optimization enabled, makes the simulations and, when they are terminated, enters the folder `conv`, compiles the convolutor and executes it.
+will perform 100 simulations (`num=1` to `num=100`) of `T=1000` trials each, on a lattice with linear size `L=64` while keeping occupied no more than 10 cores with 10 parallel simulations. The runner creates the folders `red` and `conv_res`, enters the folder `code`, compiles the code with optimization enabled, makes the simulations and, when they are terminated, enters the folder `conv`, compiles the convolutor and executes it.
 
 ## Code organization
 
