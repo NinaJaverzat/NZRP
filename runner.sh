@@ -2,6 +2,16 @@
 
 ################################################################################
 
+# This function takes in input a string.
+# If a folder with name given by the input string (locally) exists, it does nothing
+# If the folder does not (locally) exists, the function (locally) creates it
+function build_dir() {
+	if [[ ! -d $1 ]]; then
+		mkdir $1 &
+		wait
+	fi
+}
+
 # Check the number of tasks with name = process_name
 # If they are found to be == max_tasks, sleeps five seconds and then checks again
 function check_and_sleep() {
@@ -18,6 +28,9 @@ function check_and_sleep() {
 }
 
 ################################################################################
+
+build_dir "res"
+build_dir "conv_res"
 
 cd code
 
