@@ -4,7 +4,7 @@ This project contains a code that executes the algorithm for rigidity percolatio
 
 ## Files organization
 
-The code that executes the algorithm is in the folder `code`. Output files are written in the folder `res`. The folder `conv` contains a second code, which is used to post-process the data. Results of the post processing are stored in the folder `conv_res`.
+The code that executes the algorithm is in the folder `code`. Output files are written in the folder `res`. The folder `conv` contains a second code, which is used to convolute the output, which is a function of the number of active bonds, into the same function as a function of the bond concentration $p$. Results of the post processing are stored in the folder `conv_res`.
 
 ## Usage
 
