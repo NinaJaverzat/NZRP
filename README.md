@@ -127,7 +127,7 @@ We have tried to logically split the code up in modules. We have also tried to u
 - `scalars` contains scalar variables like the number of nodes and the number of bonds. Scalars also contains three sets that are used to record the roots of the bonds that wrap around the lattice.
 - `Mixed_FIFO_LIFO` is a struct that can be used both as a stack and as a queue. It contains all the basic operations of stack and queues, but it assumes that the memory is pre-allocated. If the number of elements exceeds the allocated memory, a reallocation is needed.
 - `CPSmax` and `RPSmax` are the arrays used to monitor the relative size of the largest CP and RP clusters respectively.
-- `NZ` and `RNZ` are the vectors used to store the trees $\mathcal{T}_{\mathcal{C}}$ and $\mathcal{T}_{\mathcal{R}}$ that monitor the cluster stuctures.
+- `NZ` and `RNZ` are the vectors used to store the trees that monitor the cluster stuctures.
 - `network` is the neighbor table of the lattice. Node that if the bond uv is not active, the corresponding entries in the neighbor table have negative value.
 - `pebble_graph` is the vector where the pebble graph is stored.
 - `searched_bonds` is used to reconstruct the path that leads to a pebble (type I game) or to a floppy node (type II game). Specifically, if the path is made of the pebble edge i->j, then the entry with index `j` has value `i`. In this way patsh can be backtracked (to reverse them, in type I game, or to mark the nodes as floppy, in type II game).
