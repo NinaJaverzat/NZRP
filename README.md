@@ -78,7 +78,7 @@ A simulation produces exactly two files: `LOG_Lval1_Tval2_numval3.txt` and `Smax
 
 The `LOG` file contains basic information about the simulation: the seed of the random number generator, the linear size of the lattice (`L`), the number of nodes (`N=L*L`), the number of bonds (`M=3*N)`, the number of trials (`T`). It further contains `T` rows where the time (in seconds) to execute each trial is written. The last line contains the maximum memory used during the simulation (in KB).   
 
-The `Smax` file contains two columns, which are the relative size of the largest CP and RP clusters. The file is made of `M` rows and each raw represents a value of the number of occupied bonds `m`, i.e., the first row contains the values for `m=1`, the second for `m=2` and so on. **Importantly,** note that the values are not averaged: the two colums have to be dived by `T` to obtain the average over realizations. The reason for this choice is that if several parallel simulations are performed, all the data produced must be aggregated and only later normalized. 
+The `Smax` file contains two columns, which are the relative size of the largest CP and RP clusters. The file is made of `M` rows and each raw represents a value of the number of occupied bonds $m$, i.e., the first row contains the values for $m=1$, the second for $m=2$ and so on. **Importantly,** note that the values are not averaged: the two colums have to be dived by `T` to obtain the average over realizations. The reason for this choice is that if several parallel simulations are performed, all the data produced must be aggregated and only later normalized. 
 
 #### Convolution
 
