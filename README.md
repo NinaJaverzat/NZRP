@@ -92,7 +92,7 @@ make
 Note that the default behaviour is to compile with aggressive optimization enabled. Once the program is generated, run it by giving in input `L`, `T` and `TOT`, the latter being the total number of realizations performed. **Importantly**, the convolutor is written under the assumption that the first value of `num` is 1. So, if (say) 100 simulations are performed, the convolutor assumes they are numbered from `num=1` to `num=100` and `TOT=100` must be used. The convolutor outputs one file, named `Smax_Lval1_Tval2_TOTval3_convoluted.txt`, where `val1`, `val2` and `val3` are the three input respectively. The output file is stored in the folder `conv_res`. It contains four columns, which are: 
 
 1) The average size of the largest CP cluster as a function of the number of active bonds. This is basically the aggregated average over all the simulations performed.
-2) The average size of the largest CP cluster as a function of the bond concentration. This is the convolution of the fist line with the binomial distribution.
+2) The average size of the largest CP cluster as a function of the bond concentration. This is the convolution of the first line with the binomial distribution.
 3) The average size of the largest RP cluster as a function of the number of active bonds. This is basically the aggregated average over all the simulations performed.
 4) The average size of the largest RP cluster as a function of the bond concentration. This is the convolution of the third line with the binomial distribution.
 
