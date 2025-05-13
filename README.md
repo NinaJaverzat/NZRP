@@ -1,10 +1,10 @@
-# Monte Carlo algorithm for central force rigidity percolation in dimentions 2 
+# Monte Carlo algorithm for central-force rigidity percolation in dimension 2 
 
-This project contains a code that executes the algorithm for rigidity percolation presented in the paper [title of the paper, link to it]. The algorithm is executed over a triangular lattice. The code is meant to be read as much as used.
+This project contains a code that implements the algorithm for rigidity percolation presented in the paper [title of the paper, link to it]. The algorithm is implemented on the triangular lattice. We tried to organize and comment the code in a pedagogical way.
 
 ## Files organization
 
-The code that executes the algorithm is in the folder `code`. Output files are written in the folder `res`. The folder `conv` contains a second code, which is used to convolute the output with the binomial distribution. Results of the convolution are stored in the folder `conv_res`.
+The code that implements the algorithm is in the folder `code`. Output files are written in the folder `res`. The folder `conv` contains a second code, which is used to convolute the output with the binomial distribution. Results of the convolution are stored in the folder `conv_res`.
 
 ## Usage
 
