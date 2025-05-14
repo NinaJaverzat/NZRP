@@ -144,12 +144,14 @@ inline void clean_part_of_visited(std::vector<char>& visited, std::vector<size_t
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
-// Flips the sign of the distance if the bond between u and v crosses the boundary:
-// - Gives -1 if the physical distance is O(L)
-// - Gives 1 if the physical distance is -O(L)
+// Flips the sign of the displacement if the bond between u and v crosses the boundary:
+// - Returns -1 if the boundary is crossed from left to right
+// - Returns 1 if the boundary is crossed from right to left
 inline int dist_sign(const int x){ if (abs(x)<=1) return x; else return ((x < 0) - (x > 0)); }
 
-// This are always distances between neighboring nodes: hence they are +/- 1 or 0
+// Computes the x and y algebraic displacements from v to u, in order to update the Machta displacements.
+// u and v are always neighbours, ie are distant by one lattice spacing so that these functions return +/- 1 or 0.
+// The function dist_sign is used to account for periodic boundary crossing. 
 inline int x_dist(const int u, const int v, const int& L) { return dist_sign( u%L - v%L );}
 inline int y_dist(const int u, const int v, const int& L) { return dist_sign( u/L - v/L );}
 
