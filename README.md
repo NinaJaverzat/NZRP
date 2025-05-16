@@ -143,8 +143,3 @@ We have tried to logically split the code up in modules. We have also tried to u
 ## Acknowledgements
 
 The code has been written by (AUTHORS). Feel free to contact us if you have questions/comments, and if you use the code in your project please consider adding a reference to the [link to the paper]. 
-
-## EXTRA TO BE REMOVED FROM THE README
-
-Comments to the dists functions   -> **NINA**
-
