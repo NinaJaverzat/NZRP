@@ -223,7 +223,7 @@ bool find_path_typeII_DFS(const std::vector<std::array<int, 2>>& pebble_graph, s
 
     while (!searcher.empty())                                                   // Until we are forced to retreat all the way back to the first vertex...
     {
-        const int node = searcher.top();                                        // Extract from the like (like a stack)
+        const int node = searcher.top();                                        // Extract from the tail (like a stack)
 
         for (size_t i=0; i<2; ++i)                                              // Check each neighbor of the current node
         {
