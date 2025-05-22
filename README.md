@@ -140,6 +140,6 @@ We have tried to logically split the code up in modules. We have also tried to u
 - `dx` and `dy` are used to monitor wrapping of rigid clusters. 
 - `ROOTS` is used to check if a rigid clusters containing both the nodes `u` and `v` that make up the new bond exists.
 
-## Acknowledgements
+## License
 
-The code has been written by (AUTHORS). Feel free to contact us if you have questions/comments, and if you use the code in your project please consider adding a reference to the [link to the paper]. 
+The code has been written by D. Notarmuzi and N. Javerzat. Feel free to contact us if you have questions/comments. If you use the code in your project please cite the publication corresponding to this work *** [link to the paper] and include the Zenodo doi of this project ***. 
