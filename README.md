@@ -142,4 +142,4 @@ We have tried to logically split the code up in modules. We have also tried to u
 
 ## License
 
-The code has been written by D. Notarmuzi and N. Javerzat. Feel free to contact us if you have questions/comments. If you use the code in your project please cite the publication corresponding to this work *** [link to the paper] and include the Zenodo doi of this project ***. 
+The code has been written by D. Notarmuzi and N. Javerzat. Feel free to contact us if you have questions/comments. If you use the code in your project please cite the publication corresponding to this work: _A fast algorithm for 2D Rigidity Percolation_. 
