@@ -1,6 +1,6 @@
 # Monte Carlo algorithm for central-force rigidity percolation in dimension 2 
 
-This project contains a code that implements the algorithm for rigidity percolation presented in the paper [title of the paper, link to it]. The algorithm is implemented on the triangular lattice. We tried to organize and comment the code in a pedagogical way.
+This project contains a code that implements the algorithm for rigidity percolation presented in the paper A fast algorithm for 2D Rigidity percolation, https://arxiv.org/abs/2507.00741. The algorithm is implemented on the triangular lattice. We tried to organize and comment the code in a pedagogical way.
 
 ## Files organization
 
