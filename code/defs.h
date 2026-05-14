@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <array>
+#include <map>
+#include <set>
 #include <vector>
 #include <stack>
 #include <cstdlib> // For RAND_MAX
@@ -28,6 +31,18 @@
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
+struct WrappingTriplet {
+    size_t root;
+    size_t bond_num;
+    unsigned long long size;
+};
+
+
+struct WrapState
+{
+    std::set<size_t> X_wrap_roots, Y_wrap_roots, XY_wrap_roots;
+    std::vector<WrappingTriplet> X_wrap_data, Y_wrap_data, XY_wrap_data;
+};
 
 
 struct Scalars
@@ -45,6 +60,14 @@ struct Scalars
 
 	unsigned int seed;
 	std::mt19937 gen;
+
+	unsigned long long CP_chi_num, CP_chi_den;
+	long double CP_chi_max;
+	struct WrapState CPwrap;
+
+	unsigned long long RP_chi_num, RP_chi_den;
+	long double RP_chi_max;
+	struct WrapState RPwrap;
 
 	int x_wrap, y_wrap, xy_wrap;
   std::set<int> x_wrap_roots, y_wrap_roots, xy_wrap_roots;
@@ -97,7 +120,38 @@ struct Mixed_FIFO_LIFO {
 
 
 
-struct OrderParam { std::vector<long double> y; };
+struct OrderParam
+{
+    size_t start = 0, stop = 0;
+    std::vector<long double> y;
+    std::vector<unsigned long long> norm;
+};
+
+
+struct LightOrderParam
+{
+    size_t start = 0, stop = 0;
+    std::vector<long double> y;
+};
+
+
+struct TrialData
+{
+    long double trial_time = 0.0;
+
+    long double pivoting_events = 0.0;
+    long double rigidification_events = 0.0;
+    long double overconstraining_events = 0.0;
+
+    long double searches = 0.0;
+    long double typeI_visited = 0.0;
+    long double typeII_visited = 0.0;
+    long double pivot_pushes = 0.0;
+
+    long double pivoting_time = 0.0;
+    long double rigidification_time = 0.0;
+    long double overconstraining_time = 0.0;
+};
 
 
 #endif /* DEFS_H_ */

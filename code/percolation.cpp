@@ -22,6 +22,7 @@
 #include "basic_functions.h"
 #include "percolation.h"
 #include "pebble_game.h"
+#include "measurements.h"
 
 static Mixed_FIFO_LIFO ToDo(1000000);
 int stack[1000];
@@ -32,17 +33,37 @@ int stack[1000];
 
 // PHASE DIAGRAM OF A SINGLE TRIAL: from empty to filled lattice
 
-void single_trial(std::vector<int>& RNZ, std::vector<int>& NZ, const std::vector<int>& bonds, std::vector<std::array<int, 6>>& network, std::vector<std::array<int, 2>>& pebble_graph,
-                  std::vector<int>& np, std::vector<int>& searched_bonds, std::vector<int>& marks, std::vector<size_t>& marks_indices,
-                  std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued, std::vector<size_t>& enqueued_indices,
-                  std::vector<int>& P, std::vector<std::set<int>>& Prc, std::array<int, 7>& ROOTS, OrderParam& CPSmax, OrderParam& RPSmax, Scalars& scalars,
-                  std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy)
+void single_trial(std::vector<int>& RNZ, std::vector<int>& NZ, const std::vector<int>& bonds, std::vector<std::array<int, 6>>& network,
+                  std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& np, std::vector<int>& searched_bonds, std::vector<int>& marks,
+                  std::vector<size_t>& marks_indices, std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued,
+                  std::vector<size_t>& enqueued_indices, std::vector<int>& P, std::vector<std::set<int>>& Prc, std::array<int, 7>& ROOTS, OrderParam& CPSmax,
+                  OrderParam& RPSmax, OrderParam& Searches, OrderParam& TimePerBond, OrderParam& PivotingEvents, OrderParam& RigidificationEvents,
+                  OrderParam& OverconstrainingEvents, OrderParam& TypeIVisited, OrderParam& TypeIIVisited, OrderParam& PivotPushes, OrderParam& PivotingTime,
+                  OrderParam& RigidificationTime, OrderParam& OverconstrainingTime, OrderParam& CP_Pinf, OrderParam& RP_Pinf, LightOrderParam& CP_chi,
+                  LightOrderParam& RP_chi, TrialData& trial_data, Scalars& scalars, std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy,
+                  std::vector<int>& CPdx, std::vector<int>& CPdy)
 {
+    int n_searches, n_typeI_visited, n_typeII_visited, n_pivot_pushes;
+    std::chrono::duration<long double> dt, theorem_dt;
 
-    int cv;
+    trial_data.pivoting_events = 0.0;
+    trial_data.rigidification_events = 0.0;
+    trial_data.overconstraining_events = 0.0;
+    trial_data.searches = 0.0;
+    trial_data.typeI_visited = 0.0;
+    trial_data.typeII_visited = 0.0;
+    trial_data.pivot_pushes = 0.0;
+    trial_data.pivoting_time = 0.0;
+    trial_data.rigidification_time = 0.0;
+    trial_data.overconstraining_time = 0.0;
 
     for(int i=scalars.M-1; i>=0; --i)
     {
+        n_searches = 0;
+        n_typeI_visited = 0;
+        n_typeII_visited = 0;
+        n_pivot_pushes = 0;
+        auto t0 = std::chrono::high_resolution_clock::now();
 
         // Select bond
         const int b = bonds[i];
@@ -51,30 +72,61 @@ void single_trial(std::vector<int>& RNZ, std::vector<int>& NZ, const std::vector
         const int v = -network[u][d] - 1;
 
         // Roots of connectivity clusters of u and v
-        const int cu = find_root_NZ(NZ, u);
-        if (scalars.CPS < scalars.N) { cv = find_root_NZ(NZ, v); }
-        else { cv = cu; }
+        const int cu = find_root_CP(NZ, CPdx, CPdy, u);
+        const int cv = find_root_CP(NZ, CPdx, CPdy, v);
 
         const int su = -NZ[cu];
         const int sv = -NZ[cv];
 
         if (cu != cv)
         {
-            pivoting(RNZ, pebble_graph, network, visited, visited_indices, np, searched_bonds, P, Prc, scalars, u, v, su, sv, b, dx, dy);
-            connectivity_percolation(NZ, cu, cv, scalars);
+            auto theorem_t0 = std::chrono::high_resolution_clock::now();
+            pivoting(RNZ, pebble_graph, network, visited, visited_indices, np, searched_bonds, P, Prc, scalars, n_searches, n_typeI_visited, u, v, su, sv, b, dx, dy);
+            theorem_dt = std::chrono::high_resolution_clock::now() - theorem_t0;
+            connectivity_percolation(NZ, CPdx, CPdy, cu, cv, u, v, scalars);
             ++scalars.indep;
+            update_OP(PivotingEvents, 1.0, 1.0, scalars.m);
+            update_OP(RigidificationEvents, 0.0, 1.0, scalars.m);
+            update_OP(OverconstrainingEvents, 0.0, 1.0, scalars.m);
+            update_OP(PivotingTime, theorem_dt.count(), 1.0, scalars.m);
+            update_OP(RigidificationTime, 0.0, 1.0, scalars.m);
+            update_OP(OverconstrainingTime, 0.0, 1.0, scalars.m);
+            trial_data.pivoting_events += 1.0;
+            trial_data.pivoting_time += theorem_dt.count();
         } else
         {
+            wrapping(NZ, CPdx[u], CPdx[v], CPdy[u], CPdy[v], cu, scalars.m+1, scalars.CPwrap, scalars.CP_chi_num, scalars.CP_chi_den, scalars.N);
             const int rc_uv = same_rigid_cluster(RNZ, network, ROOTS, u, v, dx, dy);
             while (ROOTS[0]) { ROOTS[ROOTS[0]--] = -1; }
 
             if(rc_uv == -1)                                                     // A rigid cluster that contains both u and v does not exist
             {
-                rigidification(RNZ, pebble_graph, network, searched_bonds, np, marks, marks_indices, visited, visited_indices, enqueued, enqueued_indices, P, Prc, scalars, u, v, b, dx, dy);
+                auto theorem_t0 = std::chrono::high_resolution_clock::now();
+                rigidification(RNZ, pebble_graph, network, searched_bonds, np, marks, marks_indices, visited, visited_indices, enqueued, enqueued_indices,
+                               P, Prc, scalars, n_searches, n_typeI_visited, n_typeII_visited, n_pivot_pushes, u, v, b, dx, dy);
+                theorem_dt = std::chrono::high_resolution_clock::now() - theorem_t0;
                 ++scalars.indep;
+                update_OP(PivotingEvents, 0.0, 1.0, scalars.m);
+                update_OP(RigidificationEvents, 1.0, 1.0, scalars.m);
+                update_OP(OverconstrainingEvents, 0.0, 1.0, scalars.m);
+                update_OP(PivotingTime, 0.0, 1.0, scalars.m);
+                update_OP(RigidificationTime, theorem_dt.count(), 1.0, scalars.m);
+                update_OP(OverconstrainingTime, 0.0, 1.0, scalars.m);
+                trial_data.rigidification_events += 1.0;
+                trial_data.rigidification_time += theorem_dt.count();
             } else {                                                            // It exists
+                auto theorem_t0 = std::chrono::high_resolution_clock::now();
                 overconstraining(RNZ, u, v, b, rc_uv, scalars, dx, dy);
+                theorem_dt = std::chrono::high_resolution_clock::now() - theorem_t0;
                 ++scalars.red;
+                update_OP(PivotingEvents, 0.0, 1.0, scalars.m);
+                update_OP(RigidificationEvents, 0.0, 1.0, scalars.m);
+                update_OP(OverconstrainingEvents, 1.0, 1.0, scalars.m);
+                update_OP(PivotingTime, 0.0, 1.0, scalars.m);
+                update_OP(RigidificationTime, 0.0, 1.0, scalars.m);
+                update_OP(OverconstrainingTime, theorem_dt.count(), 1.0, scalars.m);
+                trial_data.overconstraining_events += 1.0;
+                trial_data.overconstraining_time += theorem_dt.count();
             }
         }
 
@@ -85,9 +137,19 @@ void single_trial(std::vector<int>& RNZ, std::vector<int>& NZ, const std::vector
 
         update_OP(CPSmax, (long double)scalars.CPS, (long double)scalars.N, scalars.m-1);
         update_OP(RPSmax, (long double)scalars.RPS, (long double)scalars.M, scalars.m-1);
+        update_OP(Searches, (long double)n_searches, 1.0, scalars.m-1);
+        update_OP(TypeIVisited, (long double)n_typeI_visited, 1.0, scalars.m-1);
+        update_OP(TypeIIVisited, (long double)n_typeII_visited, 1.0, scalars.m-1);
+        update_OP(PivotPushes, (long double)n_pivot_pushes, 1.0, scalars.m-1);
+        trial_data.searches += (long double)n_searches;
+        trial_data.typeI_visited += (long double)n_typeI_visited;
+        trial_data.typeII_visited += (long double)n_typeII_visited;
+        trial_data.pivot_pushes += (long double)n_pivot_pushes;
+        dt = std::chrono::high_resolution_clock::now() - t0;
+        update_OP(TimePerBond, dt.count(), 1.0, scalars.m-1);
+        measurements(NZ, RNZ, CP_Pinf, RP_Pinf, CP_chi, RP_chi, scalars);
 
     }
-
     clean_visited(visited, visited_indices);                                    // unnecessary?
 
     if (scalars.indep - (2*scalars.N - 3) != 0) { std::cout<<"ERROR!\n"; exit(1); }
@@ -99,6 +161,33 @@ void single_trial(std::vector<int>& RNZ, std::vector<int>& NZ, const std::vector
 /////////////////////////////////////////////////////////////////////////////////
 
 // Functions for NEWMANN-ZIFF algorithm
+
+// This function finds the root of a NZ-like tree and implements path compression
+int find_root_CP(std::vector<int>& NZ, std::vector<int>& CPdx, std::vector<int>& CPdy, const int node)
+{
+
+  int r, s, p;
+  int sp=0;
+
+  r = node;
+  while ( NZ[r] >= 0 )
+  {
+      stack[sp++] = r;
+      r = NZ[r];
+  }
+
+  while (sp)
+  {
+      --sp;
+      s = stack[sp];
+      p = NZ[s];
+      CPdx[s] += CPdx[p];
+      CPdy[s] += CPdy[p];
+      NZ[s] = r;
+  }
+  return r;
+}
+
 
 // This function finds the root of a NZ-like tree and implements path compression
 int find_root_NZ(std::vector<int>& NZ, const int node)
@@ -197,20 +286,30 @@ void check_wrapping(int dx1, int dx2, int dy1, int dy2, Scalars& scalars, int ro
 
 
 // Merge connectivity clusters
-void connectivity_percolation(std::vector<int>& NZ, const int cu, const int cv, Scalars& scalars)
+void connectivity_percolation(std::vector<int>& NZ, std::vector<int>& CPdx, std::vector<int>& CPdy, const int cu, const int cv, const int u, const int v, Scalars& scalars)
 {
-    int large, small;
-
     const int su = -NZ[cu];
     const int sv = -NZ[cv];
+    int large, node_large;
+    int small, node_small;
+    unsigned long long large_size, small_size;
 
-    if (su > sv) { large =  cu; small = cv; }
-    else { large = cv; small = cu; }
+    if (su > sv || cv == 0) { large =  cu; node_large = u; small = cv; node_small = v; large_size = su; small_size = sv;}
+    else { large = cv; node_large = v; small = cu; node_small = u; large_size = sv; small_size = su;}
 
-    NZ[large] += NZ[small];                                                     // root of "small" cluster is now "large" cluster
-    NZ[small] = large;                                                          // root of "small" cluster is now "large" cluster
+    NZ[large] += NZ[small];
+    NZ[small] = large;
 
-    if (-NZ[large] > scalars.CPS) scalars.CPS = -NZ[large];                 // If needed, update the size of the largest cluster
+    CPdx[small] = -CPdx[node_small] + x_dist(node_small, node_large, scalars.L) + CPdx[node_large];
+    CPdy[small] = -CPdy[node_small] + y_dist(node_small, node_large, scalars.L) + CPdy[node_large];
+
+    update_chi(scalars.CPwrap, large, small, large_size, small_size, scalars.CP_chi_num, scalars.CP_chi_den);
+    update_wrap(scalars.CPwrap.X_wrap_roots, scalars.CPwrap.X_wrap_data, large, small);
+    update_wrap(scalars.CPwrap.Y_wrap_roots, scalars.CPwrap.Y_wrap_data, large, small);
+    update_wrap(scalars.CPwrap.XY_wrap_roots, scalars.CPwrap.XY_wrap_data, large, small);
+    check_master_equation(NZ, scalars.CPwrap, scalars.CP_chi_den, scalars.N);
+
+    if (-NZ[large] > scalars.CPS) scalars.CPS = -NZ[large];
 }
 
 
@@ -309,9 +408,10 @@ int find_shared_root(std::vector<int>& RNZ, const std::vector<std::array<int, 6>
 void pivoting(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_graph, const std::vector<std::array<int, 6>>& network,
               std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<int>& np,
               std::vector<int>& searched_bonds, std::vector<int>& P, std::vector<std::set<int>>& Prc,
-              Scalars& scalars, const int u, const int v, const int su, const int sv, const int b,
+              Scalars& scalars, int& n_searches, int& n_typeI_visited, const int u, const int v, const int su, const int sv, const int b,
               std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy)
 {
+    int this_visited;
     if (np[u] != 0) { cover_edge(pebble_graph, np, u, v); }                  // u has a pebble -> We use it to cover the edge
     else if (np[v] != 0) { cover_edge(pebble_graph, np, v, u); }             // u does not have pebbles, but v does -> We use it to cover the edge
     else                                                                        // A pebble must be gathered. We search for it in the smallest cluster
@@ -320,7 +420,9 @@ void pivoting(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_gra
         int large = v;
         if (su > sv) { small = v; large = u; }
 
-        pebble_game_typeI(pebble_graph, searched_bonds, np, small, visited, visited_indices, scalars);
+        ++n_searches;
+        pebble_game_typeI(pebble_graph, searched_bonds, np, small, visited, visited_indices, scalars, this_visited);
+        n_typeI_visited += this_visited;
         cover_edge(pebble_graph, np, small, large);
     }
 
@@ -352,6 +454,9 @@ void overconstraining(std::vector<int>& RNZ, const int u, const int v, const int
     RNZ[b] = root;
 
     check_wrapping(dx[u][root], dx[v][root], dy[u][root], dy[v][root], scalars, root);
+    update_chi(scalars.RPwrap, root, b, -RNZ[root] - 1, 1, scalars.RP_chi_num, scalars.RP_chi_den);
+    wrapping(RNZ, dx[u][root], dx[v][root], dy[u][root], dy[v][root], root,
+             scalars.m+1, scalars.RPwrap, scalars.RP_chi_num, scalars.RP_chi_den, scalars.M);
 
     if (-RNZ[root] > scalars.RPS)  { scalars.RPS = -RNZ[root]; }
 }
@@ -365,20 +470,32 @@ void overconstraining(std::vector<int>& RNZ, const int u, const int v, const int
 void rigidification(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_graph, const std::vector<std::array<int, 6>>& network,
                     std::vector<int>& searched_bonds, std::vector<int>& np, std::vector<int>& marks, std::vector<size_t>& marks_indices,
                     std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued, std::vector<size_t>& enqueued_indices,
-                    std::vector<int>& P, std::vector<std::set<int>>& Prc, Scalars& scalars, const int u, const int v, const int new_bond,
-                    std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy)
+                    std::vector<int>& P, std::vector<std::set<int>>& Prc, Scalars& scalars, int& n_searches, int& n_typeI_visited, int& n_typeII_visited,
+                    int& n_pivot_pushes, const int u, const int v, const int new_bond, std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy)
 {
 
     int new_root = new_bond;
+    int this_visited;
 
     /*
     The bond is independent, hence four pebbles must be available.
     We gather them and use one of them to cover the edge.
     */
-    while(np[u] < 2 && pebble_game_typeI(pebble_graph, searched_bonds, np, u, visited, visited_indices, scalars)) {;}
+    while(np[u] < 2)
+    {
+        ++n_searches;
+        if (!pebble_game_typeI(pebble_graph, searched_bonds, np, u, visited, visited_indices, scalars, this_visited)) { break; }
+        n_typeI_visited += this_visited;
+    }
 
     visited[u] = 1; visited_indices[++visited_indices[0]] = u;
-    while(np[v] < 2 && pebble_game_typeI(pebble_graph, searched_bonds, np, v, visited, visited_indices, scalars)) { visited[u] = 1; visited_indices[++visited_indices[0]] = u; }
+    while(np[v] < 2)
+    {
+        ++n_searches;
+        if (!pebble_game_typeI(pebble_graph, searched_bonds, np, v, visited, visited_indices, scalars, this_visited)) { break; }
+        n_typeI_visited += this_visited;
+        visited[u] = 1; visited_indices[++visited_indices[0]] = u;
+    }
     visited[u] = 0; visited_indices[0] = 0;
 
     // One of v's pebbles is used to cover the directed edge v->u
@@ -397,7 +514,8 @@ void rigidification(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebb
     */
 
     // All the rigid clusters that must be coalesced are identified and coalesced
-    build_new_rigid_cluster(RNZ, pebble_graph, network, searched_bonds, np, marks, marks_indices, visited, visited_indices, enqueued, enqueued_indices, P, Prc, u, v, new_root, scalars, dx, dy);
+    build_new_rigid_cluster(RNZ, pebble_graph, network, searched_bonds, np, marks, marks_indices, visited, visited_indices, enqueued, enqueued_indices, P,
+                            Prc, u, v, new_root, scalars, n_searches, n_typeII_visited, n_pivot_pushes, dx, dy);
 
     // If the new cluster is made of uv only, the displacements are updated like in a pivoting step
     if (-RNZ[new_bond] == 1)
@@ -417,12 +535,13 @@ void rigidification(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebb
 void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_graph, const std::vector<std::array<int, 6>>& network,
                              std::vector<int>& searched_bonds, std::vector<int>& np, std::vector<int>& marks, std::vector<size_t>& marks_indices,
                              std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued, std::vector<size_t>& enqueued_indices,
-                             std::vector<int>& P, std::vector<std::set<int>>& Prc, const int u, const int v, int& new_root, Scalars& scalars,
-                             std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy)
+                             std::vector<int>& P, std::vector<std::set<int>>& Prc, const int u, const int v, int& new_root, Scalars& scalars, int& n_searches,
+                             int& n_typeII_visited, int& n_pivot_pushes, std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy)
 {
 
     int i_is_rigid, j_is_rigid;
     size_t large, small;
+    int this_visited;
 
     int u_large, u_small, v_small;                                              // End nodes of the large and small roots, to avoid making confusion.
     int new_bond = new_root;
@@ -494,7 +613,9 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
                     {
                         marks[i] = i_is_rigid; marks_indices[++marks_indices[0]] = i;
                     } else {
-                        i_is_rigid = !pebble_game_typeII (pebble_graph, searched_bonds, np, i, visited, visited_indices, marks, marks_indices, scalars);  // found = 1 -> FLOPPY and viceversa
+                        ++n_searches;
+                        i_is_rigid = !pebble_game_typeII (pebble_graph, searched_bonds, np, i, visited, visited_indices, marks, marks_indices, scalars, this_visited);  // found = 1 -> FLOPPY and viceversa
+                        n_typeII_visited += this_visited;
                     }
                 }
 
@@ -504,7 +625,9 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
                 {
                     if (np[j] > 0) { marks[j] = j_is_rigid; marks_indices[++marks_indices[0]] = j;}
                     else if (i_is_rigid) {
-                        j_is_rigid = !pebble_game_typeII (pebble_graph, searched_bonds, np, j, visited, visited_indices, marks, marks_indices, scalars);  // found = 1 -> FLOPPY and viceversa
+                        ++n_searches;
+                        j_is_rigid = !pebble_game_typeII (pebble_graph, searched_bonds, np, j, visited, visited_indices, marks, marks_indices, scalars, this_visited);  // found = 1 -> FLOPPY and viceversa
+                        n_typeII_visited += this_visited;
                     }
                 }
 
@@ -529,14 +652,18 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
                     if (-RNZ[root] > -RNZ[new_root]) { large =  root; small = new_root; new_root = root; }
                     else { large = new_root; small = root; u_large = u_small; u_small = i; v_small = j; }
 
+                    const unsigned long long large_size = -RNZ[large];
+                    const unsigned long long small_size = -RNZ[small];
+
                     // Step 5: coalescence
                     RNZ[large] += RNZ[small];
                     RNZ[small] = large;
 
-                    // Small ceases to be a root, so we might need to remove it from the wrapping roots and replace it with large
-                    if (scalars.x_wrap_roots.find(small) != scalars.x_wrap_roots.end()) {scalars.x_wrap_roots.erase(small); scalars.x_wrap_roots.insert(large);}
-                    if (scalars.y_wrap_roots.find(small) != scalars.y_wrap_roots.end()) {scalars.y_wrap_roots.erase(small); scalars.y_wrap_roots.insert(large);}
-                    if (scalars.xy_wrap_roots.find(small) != scalars.xy_wrap_roots.end()) {scalars.xy_wrap_roots.erase(small); scalars.xy_wrap_roots.insert(large);}
+                    update_chi(scalars.RPwrap, large, small, large_size, small_size, scalars.RP_chi_num, scalars.RP_chi_den);
+                    update_wrap(scalars.RPwrap.X_wrap_roots, scalars.RPwrap.X_wrap_data, large, small);
+                    update_wrap(scalars.RPwrap.Y_wrap_roots, scalars.RPwrap.Y_wrap_data, large, small);
+                    update_wrap(scalars.RPwrap.XY_wrap_roots, scalars.RPwrap.XY_wrap_data, large, small);
+                    check_master_equation(RNZ, scalars.RPwrap, scalars.RP_chi_den, scalars.M);
 
                     // Neigh belongs to the rigid cluster as one of its bonds belongs
                     if (marks[neigh] == UNMARKED)
@@ -560,10 +687,14 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
                     if(u_small == u_large || ( dx[u_small].count(large) && dx[u_small][large] != 0 ) || ( dy[u_small].count(large) && dy[u_small][large]!=0 ))
                     {
                         check_wrapping(new_dx_us, dx[u_small][large], new_dy_us, dy[u_small][large], scalars, large);
+                        wrapping(RNZ, new_dx_us, dx[u_small][large], new_dy_us, dy[u_small][large], large,
+                                 scalars.m+1, scalars.RPwrap, scalars.RP_chi_num, scalars.RP_chi_den, scalars.M);
                     }
                     if(v_small == u_large || ( dx[v_small].count(large) && dx[v_small][large] != 0 ) || ( dy[v_small].count(large) && dy[v_small][large]!=0 ))
                     {
                         check_wrapping(new_dx_vs, dx[v_small][large], new_dy_vs, dy[v_small][large], scalars, large);
+                        wrapping(RNZ, new_dx_vs, dx[v_small][large], new_dy_vs, dy[v_small][large], large,
+                                 scalars.m+1, scalars.RPwrap, scalars.RP_chi_num, scalars.RP_chi_den, scalars.M);
                     }
 
                     // Store the new displacements
@@ -576,6 +707,8 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
 
                     // Check wrapping from pivot
                     check_wrapping(dx[pivot][large], dx[pivot][small]+dx[u_small][large], dy[pivot][large], dy[pivot][small]+dy[u_small][large], scalars, large);
+                    wrapping(RNZ, dx[pivot][large], dx[pivot][small]+dx[u_small][large], dy[pivot][large], dy[pivot][small]+dy[u_small][large], large,
+                             scalars.m+1, scalars.RPwrap, scalars.RP_chi_num, scalars.RP_chi_den, scalars.M);
 
                     /*
                     Step 6-8: UPDATE OF THE PIVOT MAP
@@ -599,6 +732,8 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
                             --P[piv];
                             if(P[piv]==1) Prc[large].erase(piv);
                             check_wrapping(new_dx, dx[piv][large], new_dy, dy[piv][large], scalars, large);        // Check
+                            wrapping(RNZ, new_dx, dx[piv][large], new_dy, dy[piv][large], large,
+                                     scalars.m+1, scalars.RPwrap, scalars.RP_chi_num, scalars.RP_chi_den, scalars.M);
                         } else {                                                 // Still step 7
                             Prc[large].insert(piv);
                             if (enqueued[piv] == 0)                              // Step 8
@@ -606,6 +741,7 @@ void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 
                                 enqueued[piv] = 1;
                                 enqueued_indices[++enqueued_indices[0]] = piv;
                                 ToDo.push(piv);
+                                ++n_pivot_pushes;
                             }
                         }
 

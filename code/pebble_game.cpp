@@ -39,7 +39,7 @@ TYPE 1 pebble game:
 
 
 bool pebble_game_typeI (std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& searched_bonds, std::vector<int>& np, const int start,
-                        std::vector<char>& visited, std::vector<size_t>& visited_indices, Scalars& scalars)
+                        std::vector<char>& visited, std::vector<size_t>& visited_indices, Scalars& scalars, int& n_visited)
 {
     bool found = 0;
     int endpoint;
@@ -47,6 +47,7 @@ bool pebble_game_typeI (std::vector<std::array<int, 2>>& pebble_graph, std::vect
     if (scalars.search_type == DFS) { found = find_path_typeI_DFS(pebble_graph, searched_bonds, np, visited, visited_indices, start, &endpoint); }
     else { found = find_path_typeI_BFS(pebble_graph, searched_bonds, np, visited, visited_indices, start, &endpoint); }
 
+    n_visited = visited_indices[0];
     reverse_path(searched_bonds, pebble_graph, np, start, endpoint);
     clean_visited(visited, visited_indices);
 
@@ -181,7 +182,7 @@ TYPE 2 pebble game:
 
 bool pebble_game_typeII (std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& searched_bonds,
                          std::vector<int>& np, const int start, std::vector<char>& visited, std::vector<size_t>& visited_indices,
-                         std::vector<int>& marks, std::vector<size_t>& marks_indices, Scalars& scalars)
+                         std::vector<int>& marks, std::vector<size_t>& marks_indices, Scalars& scalars, int& n_visited)
 {
     int u, v, endpoint;
     bool found = 0;
@@ -192,6 +193,7 @@ bool pebble_game_typeII (std::vector<std::array<int, 2>>& pebble_graph, std::vec
     if (scalars.search_type == DFS) { found = find_path_typeII_DFS(pebble_graph, searched_bonds, np, visited, visited_indices, marks, start, &endpoint); }
     else { found = find_path_typeII_BFS(pebble_graph, searched_bonds, np, visited, visited_indices, marks,  start, &endpoint); }
 
+    n_visited = (int)visited_indices[0] - 2;
     if (found)
     {
         mark_floppy (searched_bonds, marks, marks_indices, start, endpoint);
