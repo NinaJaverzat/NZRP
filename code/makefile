@@ -1,5 +1,5 @@
 # Compiler
-CXX = g++
+CXX ?= g++
 
 # Flags
 OPTIMIZATION_FLAGS = -O3 -march=native -flto -ffast-math
@@ -23,7 +23,7 @@ ifeq ($(o),1)
 endif
 
 # Source files for rp.exe
-SRCS_RP = main.cpp basic_functions.cpp percolation.cpp pebble_game.cpp
+SRCS_RP = main.cpp basic_functions.cpp percolation.cpp pebble_game.cpp measurements.cpp
 OBJS_RP = $(SRCS_RP:.cpp=.o)
 TARGET_RP = rp.exe
 

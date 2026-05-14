@@ -13,7 +13,7 @@
 // TYPE 1 GAME
 
 bool pebble_game_typeI ( std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& searched_bonds, std::vector<int>& np, const int start,
-                          std::vector<char>& visited, std::vector<size_t>& visited_indices, Scalars& scalars);
+                          std::vector<char>& visited, std::vector<size_t>& visited_indices, Scalars& scalars, int& n_visited);
 
 
 bool find_path_typeI_DFS(const std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& searched_bonds, std::vector<int>& np,
@@ -31,7 +31,7 @@ void reverse_path(std::vector<int>& searched_bonds, std::vector<std::array<int, 
 
 bool pebble_game_typeII (std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& searched_bonds,
                          std::vector<int>& np, const int start, std::vector<char>& visited, std::vector<size_t>& visited_indices,
-                         std::vector<int>& marks, std::vector<size_t>& marks_indices, Scalars& scalars);
+                         std::vector<int>& marks, std::vector<size_t>& marks_indices, Scalars& scalars, int& n_visited);
 
 bool find_path_typeII_DFS(const std::vector<std::array<int, 2>>& pebble_graph, std::vector<int>& searched_bonds, std::vector<int>& np,
                          std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<int>& marks, const int start, int* endpoint);

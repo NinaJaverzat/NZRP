@@ -2,6 +2,7 @@
 #define PERC_H_
 
 #include "defs.h"
+#include "measurements.h"
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -17,14 +18,20 @@
 void single_trial(std::vector<int>& RNZ, std::vector<int>& NZ, const std::vector<int>& bonds, std::vector<std::array<int, 6>>& network, std::vector<std::array<int, 2>>& pebble_graph,
                   std::vector<int>& np, std::vector<int>& searched_bonds, std::vector<int>& marks, std::vector<size_t>& marks_indices,
                   std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued, std::vector<size_t>& enqueued_indices,
-                  std::vector<int>& P, std::vector<std::set<int>>& Prc, std::array<int, 7>& ROOTS, OrderParam& CPSmax, OrderParam& RPSmax, Scalars& scalars,
-                  std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy);
+                  std::vector<int>& P, std::vector<std::set<int>>& Prc, std::array<int, 7>& ROOTS, OrderParam& CPSmax, OrderParam& RPSmax, OrderParam& Searches, OrderParam& TimePerBond,
+                  OrderParam& PivotingEvents, OrderParam& RigidificationEvents, OrderParam& OverconstrainingEvents, OrderParam& TypeIVisited, OrderParam& TypeIIVisited, OrderParam& PivotPushes,
+                  OrderParam& PivotingTime, OrderParam& RigidificationTime, OrderParam& OverconstrainingTime,
+                  OrderParam& CP_Pinf, OrderParam& RP_Pinf, LightOrderParam& CP_chi, LightOrderParam& RP_chi,
+                  TrialData& trial_data, Scalars& scalars, std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy,
+                  std::vector<int>& CPdx, std::vector<int>& CPdy);
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
 // Functions for NEWMANN-ZIFF algorithm
 
+
+int find_root_CP(std::vector<int>& NZ, std::vector<int>& CPdx, std::vector<int>& CPdy, const int node);
 
 int find_root_NZ(std::vector<int>& NZ, const int node);
 
@@ -33,7 +40,7 @@ int find_root(std::vector<int>& RNZ, const int bond, std::vector<std::map<int, i
 
 void check_wrapping(int dx1, int dx2, int dy1, int dy2, Scalars& scalars, int root);
 
-void connectivity_percolation(std::vector<int>& NZ, const int cu, const int cv, Scalars& scalars);
+void connectivity_percolation(std::vector<int>& NZ, std::vector<int>& CPdx, std::vector<int>& CPdy, const int cu, const int cv, const int u, const int v, Scalars& scalars);
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +71,7 @@ int find_shared_root(std::vector<int>& RNZ, const std::vector<std::array<int, 6>
 void pivoting(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_graph, const std::vector<std::array<int, 6>>& network,
               std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<int>& np,
               std::vector<int>& searched_bonds, std::vector<int>& P, std::vector<std::set<int>>& Prc,
-              Scalars& scalars, const int u, const int v, const int su, const int sv, const int b,
+              Scalars& scalars, int& n_searches, int& n_typeI_visited, const int u, const int v, const int su, const int sv, const int b,
               std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy);
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -84,14 +91,14 @@ void overconstraining(std::vector<int>& RNZ, const int u, const int v, const int
 void rigidification(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_graph, const std::vector<std::array<int, 6>>& network,
                     std::vector<int>& searched_bonds, std::vector<int>& np, std::vector<int>& marks, std::vector<size_t>& marks_indices,
                     std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued, std::vector<size_t>& enqueued_indices,
-                    std::vector<int>& P, std::vector<std::set<int>>& Prc, Scalars& scalars, const int u, const int v, const int new_bond,
+                    std::vector<int>& P, std::vector<std::set<int>>& Prc, Scalars& scalars, int& n_searches, int& n_typeI_visited, int& n_typeII_visited, int& n_pivot_pushes, const int u, const int v, const int new_bond,
                     std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy);
 
 
 void build_new_rigid_cluster(std::vector<int>& RNZ, std::vector<std::array<int, 2>>& pebble_graph, const std::vector<std::array<int, 6>>& network,
                              std::vector<int>& searched_bonds, std::vector<int>& np, std::vector<int>& marks, std::vector<size_t>& marks_indices,
                              std::vector<char>& visited, std::vector<size_t>& visited_indices, std::vector<char>& enqueued, std::vector<size_t>& enqueued_indices,
-                             std::vector<int>& P, std::vector<std::set<int>>& Prc, const int u, const int v, int& new_root, Scalars& scalars,
+                             std::vector<int>& P, std::vector<std::set<int>>& Prc, const int u, const int v, int& new_root, Scalars& scalars, int& n_searches, int& n_typeII_visited, int& n_pivot_pushes,
                              std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy);
 
 
@@ -178,6 +185,7 @@ inline void cover_edge( std::vector<std::array<int, 2>>& pebble_graph, std::vect
 inline void update_OP(OrderParam& OP, const long double val, const long double norm, const int ind)
 {
     OP.y[ind] += val / norm;
+    if (!OP.norm.empty()) OP.norm[ind] += 1.0;
 }
 
 

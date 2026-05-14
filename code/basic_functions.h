@@ -8,7 +8,11 @@
 
 // INITALIZATION
 
-void basic_init(Scalars& scalars, OrderParam& CPSmax, OrderParam& RPSmax);
+void basic_init(Scalars& scalars, OrderParam& CPSmax, OrderParam& RPSmax, OrderParam& Searches, OrderParam& TimePerBond,
+                OrderParam& PivotingEvents, OrderParam& RigidificationEvents, OrderParam& OverconstrainingEvents,
+                OrderParam& TypeIVisited, OrderParam& TypeIIVisited, OrderParam& PivotPushes,
+                OrderParam& PivotingTime, OrderParam& RigidificationTime, OrderParam& OverconstrainingTime,
+                OrderParam& CP_Pinf, OrderParam& RP_Pinf, LightOrderParam& CPchi, LightOrderParam& RPchi);
 
 void network_init(std::vector<std::array<int, 6>>& network, const Scalars& scalars);
 void network_reset(std::vector<std::array<int, 6>>& network, std::vector<int>& bonds, const Scalars& scalars);
@@ -16,7 +20,7 @@ void network_reset(std::vector<std::array<int, 6>>& network, std::vector<int>& b
 
 void init(std::vector<int>& RNZ, std::vector<int>& NZ, std::vector<int>& bonds, std::vector<std::array<int, 2>>& pebble_graph,
           std::vector<int>& np, std::vector<int>& P, std::vector<std::set<int>>& Prc, Scalars& scalars,
-          std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy);
+          std::vector<std::map<int, int>>& dx, std::vector<std::map<int, int>>& dy, std::vector<int>& CPdx, std::vector<int>& CPdy);
 
 FILE* open_file(const std::ostringstream& filenameStream);
 
