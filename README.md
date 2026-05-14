@@ -164,7 +164,7 @@ fullrange_conv.exe <L> <T> <FIRST_NUM> <LAST_NUM> <STEM> <MODE> <NCOLS> <COL0> [
 
 | Mode | Description |
 |---|---|
-| `pair` | Reads each column as a raw cumulative observable, normalises by $T \times \text{found\_files}$, and convolves the full range. Output has columns: $p$, avg($m$), conv($p$), repeated for each requested column. |
+| `pair` | Reads each column as a raw cumulative observable, normalises by $T \times \text{foundFiles}$, and convolves the full range. Output has columns: $p$, avg($m$), conv($p$), repeated for each requested column. |
 | `curve` | Identical to `pair`. |
 | `cdf` | Interprets the two requested columns as the bond numbers at which the CP and RP wrapping clusters first appear (per trial). Builds empirical CDFs and also writes an `_averaged.txt` file pairing the two CDFs. |
 | `wrap` | Alias for `cdf`. |
